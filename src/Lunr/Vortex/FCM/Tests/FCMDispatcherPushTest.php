@@ -60,7 +60,7 @@ class FCMDispatcherPushTest extends FCMDispatcherTest
     }
 
     /**
-     * Test that push() returns FCMResponseObject.
+     * Test that push() throws exception when no endpoints are provided.
      *
      * @covers Lunr\Vortex\FCM\FCMDispatcher::push
      */
@@ -72,6 +72,73 @@ class FCMDispatcherPushTest extends FCMDispatcherTest
         $this->expectExceptionMessage('No endpoints provided!');
 
         $this->class->push($this->payload, $endpoints);
+    }
+
+    /**
+     * Test that push() returns response when oauth_token is null.
+     *
+     * @covers Lunr\Vortex\FCM\FCMDispatcher::push
+     */
+    public function testPushWhenOAuthTokenIsNull(): void
+    {
+        $endpoints = [ 'endpoint' ];
+
+        $this->payload->expects($this->once())
+                      ->method('get_payload')
+                      ->willReturn('{"collapse_key":"abcde-12345"}');
+
+        $this->set_reflection_property_value('oauth_token', NULL);
+
+        $this->logger->expects($this->exactly(2))
+                     ->method('warning')
+                     ->withConsecutive(
+                        [
+                            'Tried to push FCM notification to {endpoint} but wasn\'t authenticated.',
+                            [ 'endpoint' => 'endpoint' ]
+                        ],
+                        [
+                            'Dispatching FCM notification failed for endpoint {endpoint}: {error}',
+                            [ 'endpoint' => 'endpoint', 'error' => 'Error with authentication' ]
+                        ]
+                    );
+
+        $result = $this->class->push($this->payload, $endpoints);
+
+        $this->assertInstanceOf('Lunr\Vortex\FCM\FCMResponse', $result);
+    }
+
+    /**
+     * Test that push() returns response when project_id is null.
+     *
+     * @covers Lunr\Vortex\FCM\FCMDispatcher::push
+     */
+    public function testPushWhenProjectIdIsNull(): void
+    {
+        $endpoints = [ 'endpoint' ];
+
+        $this->payload->expects($this->once())
+                      ->method('get_payload')
+                      ->willReturn('{"collapse_key":"abcde-12345"}');
+
+        $this->set_reflection_property_value('oauth_token', 'test');
+        $this->set_reflection_property_value('project_id', NULL);
+
+        $this->logger->expects($this->exactly(2))
+                     ->method('warning')
+                     ->withConsecutive(
+                        [
+                            'Tried to push FCM notification to {endpoint} but project id is not provided.',
+                            [ 'endpoint' => 'endpoint' ]
+                        ],
+                        [
+                            'Dispatching FCM notification failed for endpoint {endpoint}: {error}',
+                            [ 'endpoint' => 'endpoint', 'error' => 'Invalid JSON ()' ]
+                        ]
+                    );
+
+        $result = $this->class->push($this->payload, $endpoints);
+
+        $this->assertInstanceOf('Lunr\Vortex\FCM\FCMResponse', $result);
     }
 
     /**
@@ -87,7 +154,8 @@ class FCMDispatcherPushTest extends FCMDispatcherTest
                       ->method('get_payload')
                       ->willReturn('{"collapse_key":"abcde-12345"}');
 
-        $this->set_reflection_property_value('auth_token', 'auth_token');
+        $this->set_reflection_property_value('oauth_token', 'oauth_token');
+        $this->set_reflection_property_value('project_id', 'fcm-project');
 
         $response = $this->getMockBuilder('WpOrg\Requests\Response')->getMock();
 
@@ -97,7 +165,8 @@ class FCMDispatcherPushTest extends FCMDispatcherTest
 
         $this->class->push($this->payload, $endpoints);
 
-        $this->assertPropertyEquals('auth_token', 'auth_token');
+        $this->assertPropertyEquals('oauth_token', 'oauth_token');
+        $this->assertPropertyEquals('project_id', 'fcm-project');
     }
 
     /**
@@ -107,16 +176,19 @@ class FCMDispatcherPushTest extends FCMDispatcherTest
      */
     public function testPushWithFailedRequest(): void
     {
+        $this->set_reflection_property_value('oauth_token', 'oauth_token');
+        $this->set_reflection_property_value('project_id', 'fcm-project');
+
         $this->mock_function('curl_errno', function () { return 10; });
 
         $endpoints = [ 'endpoint' ];
 
         $headers = [
             'Content-Type'  => 'application/json',
-            'Authorization' => 'key=',
+            'Authorization' => 'Bearer oauth_token',
         ];
 
-        $url  = 'https://fcm.googleapis.com/fcm/send';
+        $url  = 'https://fcm.googleapis.com/v1/projects/fcm-project/messages:send';
         $post = '{"to":"endpoint"}';
 
         $options = [
@@ -150,16 +222,19 @@ class FCMDispatcherPushTest extends FCMDispatcherTest
      */
     public function testPushWithTimeoutRequest()
     {
+        $this->set_reflection_property_value('oauth_token', 'oauth_token');
+        $this->set_reflection_property_value('project_id', 'fcm-project');
+
         $this->mock_function('curl_errno', function () { return 28; });
 
         $endpoints = [ 'endpoint' ];
 
         $headers = [
             'Content-Type'  => 'application/json',
-            'Authorization' => 'key=',
+            'Authorization' => 'Bearer oauth_token',
         ];
 
-        $url  = 'https://fcm.googleapis.com/fcm/send';
+        $url  = 'https://fcm.googleapis.com/v1/projects/fcm-project/messages:send';
         $post = '{"to":"endpoint"}';
 
         $options = [
@@ -195,16 +270,19 @@ class FCMDispatcherPushTest extends FCMDispatcherTest
      */
     public function testPushRequestWithDefaultValues(): void
     {
+        $this->set_reflection_property_value('oauth_token', 'oauth_token');
+        $this->set_reflection_property_value('project_id', 'fcm-project');
+
         $endpoints = [ 'endpoint' ];
 
         $response = $this->getMockBuilder('WpOrg\Requests\Response')->getMock();
 
         $headers = [
             'Content-Type'  => 'application/json',
-            'Authorization' => 'key=',
+            'Authorization' => 'Bearer oauth_token',
         ];
 
-        $url  = 'https://fcm.googleapis.com/fcm/send';
+        $url  = 'https://fcm.googleapis.com/v1/projects/fcm-project/messages:send';
         $post = '{"to":"endpoint"}';
 
         $options = [
@@ -227,22 +305,23 @@ class FCMDispatcherPushTest extends FCMDispatcherTest
      */
     public function testPushRequestWithSingleEndpoint(): void
     {
+        $this->set_reflection_property_value('oauth_token', 'oauth_token');
+        $this->set_reflection_property_value('project_id', 'fcm-project');
+
         $endpoints = [ 'endpoint' ];
 
         $this->payload->expects($this->once())
                       ->method('get_payload')
                       ->willReturn('{"collapse_key":"abcde-12345"}');
 
-        $this->set_reflection_property_value('auth_token', 'auth_token');
-
         $response = $this->getMockBuilder('WpOrg\Requests\Response')->getMock();
 
         $headers = [
             'Content-Type'  => 'application/json',
-            'Authorization' => 'key=auth_token',
+            'Authorization' => 'Bearer oauth_token',
         ];
 
-        $url  = 'https://fcm.googleapis.com/fcm/send';
+        $url  = 'https://fcm.googleapis.com/v1/projects/fcm-project/messages:send';
         $post = '{"collapse_key":"abcde-12345","to":"endpoint"}';
 
         $options = [
@@ -265,22 +344,23 @@ class FCMDispatcherPushTest extends FCMDispatcherTest
      */
     public function testPushRequestWithMultibyteCharacters(): void
     {
+        $this->set_reflection_property_value('oauth_token', 'oauth_token');
+        $this->set_reflection_property_value('project_id', 'fcm-project');
+
         $endpoints = [ 'endpoint' ];
 
         $this->payload->expects($this->once())
                       ->method('get_payload')
                       ->willReturn('{"collapse_key":"abcde-12345","data":{"message":"凄い"}}');
 
-        $this->set_reflection_property_value('auth_token', 'auth_token');
-
         $response = $this->getMockBuilder('WpOrg\Requests\Response')->getMock();
 
         $headers = [
             'Content-Type'  => 'application/json',
-            'Authorization' => 'key=auth_token',
+            'Authorization' => 'Bearer oauth_token',
         ];
 
-        $url  = 'https://fcm.googleapis.com/fcm/send';
+        $url  = 'https://fcm.googleapis.com/v1/projects/fcm-project/messages:send';
         $post = '{"collapse_key":"abcde-12345","data":{"message":"凄い"},"to":"endpoint"}';
 
         $options = [

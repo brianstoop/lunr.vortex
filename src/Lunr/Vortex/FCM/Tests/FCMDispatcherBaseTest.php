@@ -31,11 +31,19 @@ class FCMDispatcherBaseTest extends FCMDispatcherTest
     }
 
     /**
-     * Test that the auth token is set to an empty string by default.
+     * Test that the project_id is set to an empty string by default.
      */
-    public function testAuthTokenIsEmptyString(): void
+    public function testProjectIdIsEmptyString(): void
     {
-        $this->assertPropertyEquals('auth_token', '');
+        $this->assertPropertyEquals('project_id', '');
+    }
+
+    /**
+     * Test that the OAuth token is set to null by default.
+     */
+    public function testOAuthTokenIsSetToNull(): void
+    {
+        $this->assertPropertyEquals('oauth_token', NULL);
     }
 
     /**
@@ -45,12 +53,14 @@ class FCMDispatcherBaseTest extends FCMDispatcherTest
      */
     public function testGetNewResponseObjectForFailedRequest(): void
     {
+        $this->set_reflection_property_value('project_id', 'fcm-project');
+
         $method = $this->get_accessible_reflection_method('get_new_response_object_for_failed_request');
 
         $result = $method->invoke($this->class);
 
         $this->assertInstanceOf('WpOrg\Requests\Response', $result);
-        $this->assertEquals('https://fcm.googleapis.com/fcm/send', $result->url);
+        $this->assertEquals('https://fcm.googleapis.com/v1/projects/fcm-project/messages:send', $result->url);
     }
 
     /**
