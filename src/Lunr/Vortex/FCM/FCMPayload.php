@@ -10,6 +10,7 @@
 
 namespace Lunr\Vortex\FCM;
 
+use Lunr\Vortex\APNS\APNSPriority;
 use ReflectionClass;
 
 /**
@@ -31,7 +32,7 @@ class FCMPayload
     {
         $this->elements = [];
 
-        $this->elements['priority'] = FCMPriority::HIGH;
+        $this->elements['android']['priority'] = FCMAndroidPriority::High->value;
     }
 
     /**
@@ -45,11 +46,13 @@ class FCMPayload
     /**
      * Construct the payload for the push notification.
      *
-     * @return string FCMPayload
+     * @param int $flag The flag to encode the payload with
+     *
+     * @return string|false FCMPayload
      */
-    public function get_payload(): string
+    public function get_json_payload(int $flag = 0): string|false
     {
-        return json_encode($this->elements);
+        return json_encode([ 'message' => $this->elements ], $flag);
     }
 
     /**
@@ -64,7 +67,8 @@ class FCMPayload
      */
     public function set_collapse_key(string $key): self
     {
-        $this->elements['collapse_key'] = $key;
+        $this->elements['android']['collapse_key']             = $key;
+        $this->elements['apns']['headers']['apns-collapse-id'] = $key;
 
         return $this;
     }
@@ -86,9 +90,9 @@ class FCMPayload
     }
 
     /**
-     * Sets the payload key time_to_live.
+     * Sets the payload key ttl for android devices.
      *
-     * It defines how long (in seconds) the message should be kept on FCM storage,
+     * It defines how long (in seconds) the message should be kept on the Android storage,
      * if the device is offline.
      *
      * @param int $ttl The time in seconds for the notification to stay alive
@@ -97,7 +101,7 @@ class FCMPayload
      */
     public function set_time_to_live(int $ttl): self
     {
-        $this->elements['time_to_live'] = $ttl;
+        $this->elements['android']['ttl'] = (string) $ttl . 's';
 
         return $this;
     }
@@ -147,7 +151,7 @@ class FCMPayload
      */
     public function set_content_available(bool $val): self
     {
-        $this->elements['content_available'] = $val;
+        $this->elements['apns']['payload']['aps']['content-available'] = (int) $val;
 
         return $this;
     }
@@ -193,7 +197,7 @@ class FCMPayload
      */
     public function set_mutable_content(bool $mutable): self
     {
-        $this->elements['mutable_content'] = $mutable;
+        $this->elements['apns']['payload']['aps']['mutable-content'] = (int) $mutable;
 
         return $this;
     }
@@ -207,11 +211,18 @@ class FCMPayload
      */
     public function set_priority(string $priority): self
     {
-        $priority       = strtolower($priority);
-        $priority_class = new ReflectionClass('\Lunr\Vortex\FCM\FCMPriority');
-        if (in_array($priority, array_values($priority_class->getConstants())))
+        $priority = strtoupper($priority);
+
+        if (FCMAndroidPriority::tryFrom($priority) !== NULL)
         {
-            $this->elements['priority'] = $priority;
+            $this->elements['android']['priority'] = $priority;
+        }
+
+        $priority_class = new ReflectionClass(APNSPriority::class);
+        $priorities     = $priority_class->getConstants();
+        if (in_array($priority, array_keys($priorities)))
+        {
+            $this->elements['apns']['headers']['apns-priority'] = $priorities[$priority];
         }
 
         return $this;
@@ -228,6 +239,92 @@ class FCMPayload
     public function set_options(string $key, string $value): self
     {
         $this->elements['fcm_options'][$key] = $value;
+
+        return $this;
+    }
+
+    /**
+     * Set the token of the target for the notification.
+     *
+     * @param string $token Token of the target for the notification.
+     *
+     * @return FCMPayload Self Reference
+     */
+    public function set_token(string $token): self
+    {
+        $this->elements['token'] = $token;
+
+        return $this;
+    }
+
+    /**
+     * Sets the payload category.
+     *
+     * @param string $category The category to set it to
+     *
+     * @return FCMPayload Self Reference
+     */
+    public function set_category(string $category): self
+    {
+        $this->elements['android']['notification']['click_action'] = $category;
+        $this->elements['apns']['payload']['aps']['category']      = $category;
+
+        return $this;
+    }
+
+    /**
+     * Sets the tag of the notification for android notifications.
+     *
+     * @param string $tag The tag to set it to
+     *
+     * @return FCMPayload Self Reference
+     */
+    public function set_tag(string $tag): self
+    {
+        $this->elements['android']['notification']['tag'] = $tag;
+
+        return $this;
+    }
+
+    /**
+     * Sets the color of the notification for android notifications.
+     *
+     * @param string $color The color to set it to
+     *
+     * @return FCMPayload Self Reference
+     */
+    public function set_color(string $color): self
+    {
+        $this->elements['android']['notification']['color'] = $color;
+
+        return $this;
+    }
+
+    /**
+     * Sets the icon of the notification for android notifications.
+     *
+     * @param string $icon The icon to set it to
+     *
+     * @return FCMPayload Self Reference
+     */
+    public function set_icon(string $icon): self
+    {
+        $this->elements['android']['notification']['icon'] = $icon;
+
+        return $this;
+    }
+
+    /**
+     * Sets the notification sound.
+     *
+     * @param string $sound The sound to set it to
+     *
+     * @return FCMPayload Self Reference
+     */
+    public function set_sound(string $sound): self
+    {
+        $this->elements['android']['notification']['sound'] = $sound;
+        $this->elements['apns']['payload']['aps']['sound']  = $sound;
 
         return $this;
     }

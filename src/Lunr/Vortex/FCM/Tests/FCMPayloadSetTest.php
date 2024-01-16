@@ -29,8 +29,14 @@ class FCMPayloadSetTest extends FCMPayloadTest
 
         $value = $this->get_reflection_property_value('elements');
 
-        $this->assertArrayHasKey('collapse_key', $value);
-        $this->assertEquals('test', $value['collapse_key']);
+        $this->assertArrayHasKey('android', $value);
+        $this->assertArrayHasKey('collapse_key', $value['android']);
+        $this->assertEquals('test', $value['android']['collapse_key']);
+
+        $this->assertArrayHasKey('apns', $value);
+        $this->assertArrayHasKey('headers', $value['apns']);
+        $this->assertArrayHasKey('apns-collapse-id', $value['apns']['headers']);
+        $this->assertEquals('test', $value['apns']['headers']['apns-collapse-id']);
     }
 
     /**
@@ -54,8 +60,9 @@ class FCMPayloadSetTest extends FCMPayloadTest
 
         $value = $this->get_reflection_property_value('elements');
 
-        $this->assertArrayHasKey('time_to_live', $value);
-        $this->assertEquals(5, $value['time_to_live']);
+        $this->assertArrayHasKey('android', $value);
+        $this->assertArrayHasKey('ttl', $value['android']);
+        $this->assertEquals('5s', $value['android']['ttl']);
     }
 
     /**
@@ -104,8 +111,14 @@ class FCMPayloadSetTest extends FCMPayloadTest
 
         $value = $this->get_reflection_property_value('elements');
 
-        $this->assertArrayHasKey('priority', $value);
-        $this->assertEquals('normal', $value['priority']);
+        $this->assertArrayHasKey('android', $value);
+        $this->assertArrayHasKey('priority', $value['android']);
+        $this->assertEquals('NORMAL', $value['android']['priority']);
+
+        $this->assertArrayHasKey('apns', $value);
+        $this->assertArrayHasKey('headers', $value['apns']);
+        $this->assertArrayHasKey('apns-priority', $value['apns']['headers']);
+        $this->assertEquals(5, $value['apns']['headers']['apns-priority']);
     }
 
     /**
@@ -119,8 +132,9 @@ class FCMPayloadSetTest extends FCMPayloadTest
 
         $value = $this->get_reflection_property_value('elements');
 
-        $this->assertArrayHasKey('priority', $value);
-        $this->assertEquals('high', $value['priority']);
+        $this->assertArrayHasKey('android', $value);
+        $this->assertArrayHasKey('priority', $value['android']);
+        $this->assertEquals('HIGH', $value['android']['priority']);
     }
 
     /**
@@ -144,8 +158,11 @@ class FCMPayloadSetTest extends FCMPayloadTest
 
         $value = $this->get_reflection_property_value('elements');
 
-        $this->assertArrayHasKey('mutable_content', $value);
-        $this->assertEquals(TRUE, $value['mutable_content']);
+        $this->assertArrayHasKey('apns', $value);
+        $this->assertArrayHasKey('payload', $value['apns']);
+        $this->assertArrayHasKey('aps', $value['apns']['payload']);
+        $this->assertArrayHasKey('mutable-content', $value['apns']['payload']['aps']);
+        $this->assertEquals(1, $value['apns']['payload']['aps']['mutable-content']);
     }
 
     /**
@@ -244,8 +261,11 @@ class FCMPayloadSetTest extends FCMPayloadTest
 
         $value = $this->get_reflection_property_value('elements');
 
-        $this->assertArrayHasKey('content_available', $value);
-        $this->assertEquals(TRUE, $value['content_available']);
+        $this->assertArrayHasKey('apns', $value);
+        $this->assertArrayHasKey('payload', $value['apns']);
+        $this->assertArrayHasKey('aps', $value['apns']['payload']);
+        $this->assertArrayHasKey('content-available', $value['apns']['payload']['aps']);
+        $this->assertEquals(1, $value['apns']['payload']['aps']['content-available']);
     }
 
     /**
@@ -259,9 +279,9 @@ class FCMPayloadSetTest extends FCMPayloadTest
     }
 
     /**
-     * Test set_content_available() works correctly.
+     * Test set_options() works correctly.
      *
-     * @covers \Lunr\Vortex\FCM\FCMPayload::set_content_available
+     * @covers \Lunr\Vortex\FCM\FCMPayload::set_options
      */
     public function testSetOptions()
     {
@@ -277,11 +297,183 @@ class FCMPayloadSetTest extends FCMPayloadTest
     /**
      * Test fluid interface of set_content_available().
      *
-     * @covers \Lunr\Vortex\FCM\FCMPayload::set_content_available
+     * @covers \Lunr\Vortex\FCM\FCMPayload::set_options
      */
     public function testSetOptionsReturnsSelfReference()
     {
         $this->assertSame($this->class, $this->class->set_options('analytics_label', 'fooBar'));
+    }
+
+    /**
+     * Test set_token() works correctly.
+     *
+     * @covers \Lunr\Vortex\FCM\FCMPayload::set_token
+     */
+    public function testSetToken()
+    {
+        $this->class->set_token('endpoint_token');
+
+        $value = $this->get_reflection_property_value('elements');
+
+        $this->assertArrayHasKey('token', $value);
+        $this->assertEquals('endpoint_token', $value['token']);
+    }
+
+    /**
+     * Test fluid interface of set_token().
+     *
+     * @covers \Lunr\Vortex\FCM\FCMPayload::set_token
+     */
+    public function testSetTokenReturnsSelfReference()
+    {
+        $this->assertSame($this->class, $this->class->set_token('endpoint_token'));
+    }
+
+    /**
+     * Test set_category() works correctly.
+     *
+     * @covers \Lunr\Vortex\FCM\FCMPayload::set_category
+     */
+    public function testSetCategory()
+    {
+        $this->class->set_category('category');
+
+        $value = $this->get_reflection_property_value('elements');
+
+        $this->assertArrayHasKey('android', $value);
+        $this->assertArrayHasKey('notification', $value['android']);
+        $this->assertArrayHasKey('click_action', $value['android']['notification']);
+        $this->assertEquals('category', $value['android']['notification']['click_action']);
+
+        $this->assertArrayHasKey('apns', $value);
+        $this->assertArrayHasKey('payload', $value['apns']);
+        $this->assertArrayHasKey('aps', $value['apns']['payload']);
+        $this->assertArrayHasKey('category', $value['apns']['payload']['aps']);
+        $this->assertEquals('category', $value['apns']['payload']['aps']['category']);
+    }
+
+    /**
+     * Test fluid interface of set_category().
+     *
+     * @covers \Lunr\Vortex\FCM\FCMPayload::set_category
+     */
+    public function testSetCategoryReturnsSelfReference()
+    {
+        $this->assertSame($this->class, $this->class->set_category('category'));
+    }
+
+    /**
+     * Test set_tag() works correctly.
+     *
+     * @covers \Lunr\Vortex\FCM\FCMPayload::set_tag
+     */
+    public function testSetTag()
+    {
+        $this->class->set_tag('tag');
+
+        $value = $this->get_reflection_property_value('elements');
+
+        $this->assertArrayHasKey('android', $value);
+        $this->assertArrayHasKey('notification', $value['android']);
+        $this->assertArrayHasKey('tag', $value['android']['notification']);
+        $this->assertEquals('tag', $value['android']['notification']['tag']);
+    }
+
+    /**
+     * Test fluid interface of set_tag().
+     *
+     * @covers \Lunr\Vortex\FCM\FCMPayload::set_tag
+     */
+    public function testSetTagReturnsSelfReference()
+    {
+        $this->assertSame($this->class, $this->class->set_tag('tag'));
+    }
+
+    /**
+     * Test set_color() works correctly.
+     *
+     * @covers \Lunr\Vortex\FCM\FCMPayload::set_color
+     */
+    public function testSetColor()
+    {
+        $this->class->set_color('red');
+
+        $value = $this->get_reflection_property_value('elements');
+
+        $this->assertArrayHasKey('android', $value);
+        $this->assertArrayHasKey('notification', $value['android']);
+        $this->assertArrayHasKey('color', $value['android']['notification']);
+        $this->assertEquals('red', $value['android']['notification']['color']);
+    }
+
+    /**
+     * Test fluid interface of set_color().
+     *
+     * @covers \Lunr\Vortex\FCM\FCMPayload::set_color
+     */
+    public function testSetColorReturnsSelfReference()
+    {
+        $this->assertSame($this->class, $this->class->set_color('red'));
+    }
+
+    /**
+     * Test set_icon() works correctly.
+     *
+     * @covers \Lunr\Vortex\FCM\FCMPayload::set_icon
+     */
+    public function testSetIcon()
+    {
+        $this->class->set_icon('icon');
+
+        $value = $this->get_reflection_property_value('elements');
+
+        $this->assertArrayHasKey('android', $value);
+        $this->assertArrayHasKey('notification', $value['android']);
+        $this->assertArrayHasKey('icon', $value['android']['notification']);
+        $this->assertEquals('icon', $value['android']['notification']['icon']);
+    }
+
+    /**
+     * Test fluid interface of set_icon().
+     *
+     * @covers \Lunr\Vortex\FCM\FCMPayload::set_icon
+     */
+    public function testSetIconReturnsSelfReference()
+    {
+        $this->assertSame($this->class, $this->class->set_icon('icon'));
+    }
+
+    /**
+     * Test set_sound() works correctly.
+     *
+     * @covers \Lunr\Vortex\FCM\FCMPayload::set_sound
+     */
+    public function testSetSound()
+    {
+        $this->class->set_sound('sound');
+
+        $value = $this->get_reflection_property_value('elements');
+
+        $this->assertArrayHasKey('android', $value);
+        $this->assertArrayHasKey('notification', $value['android']);
+        $this->assertArrayHasKey('sound', $value['android']['notification']);
+        $this->assertEquals('sound', $value['android']['notification']['sound']);
+
+        $this->assertArrayHasKey('apns', $value);
+        $this->assertArrayHasKey('payload', $value['apns']);
+        $this->assertArrayHasKey('aps', $value['apns']['payload']);
+        $this->assertArrayHasKey('sound', $value['apns']['payload']['aps']);
+        $this->assertEquals('sound', $value['apns']['payload']['aps']['sound']);
+    }
+
+    /**
+     * Test fluid interface of set_sound().
+     *
+     * @covers \Lunr\Vortex\FCM\FCMPayload::set_sound
+     */
+    public function testSetSoundReturnsSelfReference()
+    {
+        $this->assertSame($this->class, $this->class->set_sound('sound'));
     }
 
 }

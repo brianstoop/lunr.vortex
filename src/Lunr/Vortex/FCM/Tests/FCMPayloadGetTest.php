@@ -21,24 +21,24 @@ class FCMPayloadGetTest extends FCMPayloadTest
     /**
      * Test get_payload() with collapse_key being present.
      *
-     * @covers Lunr\Vortex\FCM\FCMPayload::get_payload
+     * @covers Lunr\Vortex\FCM\FCMPayload::get_json_payload
      */
-    public function testGetPayloadWithCollapseKey(): void
+    public function testGetJsonPayloadWithCollapseKey(): void
     {
         $file     = TEST_STATICS . '/Vortex/fcm/collapse_key.json';
         $elements = [ 'collapse_key' => 'test' ];
 
         $this->set_reflection_property_value('elements', $elements);
 
-        $this->assertStringMatchesFormatFile($file, $this->class->get_payload());
+        $this->assertStringMatchesFormatFile($file, $this->class->get_json_payload());
     }
 
     /**
-     * Test get_payload() with data being present.
+     * Test get_json_payload() with data being present.
      *
-     * @covers Lunr\Vortex\FCM\FCMPayload::get_payload
+     * @covers Lunr\Vortex\FCM\FCMPayload::get_json_payload
      */
-    public function testGetPayloadWithData(): void
+    public function testGetJsonPayloadWithData(): void
     {
         $file     = TEST_STATICS . '/Vortex/fcm/data.json';
         $elements = [
@@ -50,34 +50,34 @@ class FCMPayloadGetTest extends FCMPayloadTest
 
         $this->set_reflection_property_value('elements', $elements);
 
-        $this->assertStringMatchesFormatFile($file, $this->class->get_payload());
+        $this->assertStringMatchesFormatFile($file, $this->class->get_json_payload());
     }
 
     /**
-     * Test get_payload() with time_to_live being present.
+     * Test get_json_payload() with time_to_live being present.
      *
-     * @covers Lunr\Vortex\FCM\FCMPayload::get_payload
+     * @covers Lunr\Vortex\FCM\FCMPayload::get_json_payload
      */
-    public function testGetPayloadWithTimeToLive(): void
+    public function testGetJsonPayloadWithTimeToLive(): void
     {
         $file     = TEST_STATICS . '/Vortex/fcm/time_to_live.json';
         $elements = [ 'time_to_live' => 10 ];
 
         $this->set_reflection_property_value('elements', $elements);
 
-        $this->assertStringMatchesFormatFile($file, $this->class->get_payload());
+        $this->assertStringMatchesFormatFile($file, $this->class->get_json_payload());
     }
 
     /**
-     * Test get_payload() with everything being present.
+     * Test get_json_payload() with everything being present.
      *
-     * @covers Lunr\Vortex\FCM\FCMPayload::get_payload
+     * @covers Lunr\Vortex\FCM\FCMPayload::get_json_payload
      */
-    public function testGetPayload(): void
+    public function testGetJsonPayload(): void
     {
         $file     = TEST_STATICS . '/Vortex/fcm/fcm.json';
         $elements = [
-            'registration_ids' => [ 'one', 'two', 'three' ],
+            'token'            => 'one',
             'collapse_key'     => 'test',
             'data'             => [
                 'key1' => 'value1',
@@ -88,7 +88,7 @@ class FCMPayloadGetTest extends FCMPayloadTest
 
         $this->set_reflection_property_value('elements', $elements);
 
-        $this->assertStringMatchesFormatFile($file, $this->class->get_payload());
+        $this->assertStringMatchesFormatFile($file, $this->class->get_json_payload());
     }
 
 }

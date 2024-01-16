@@ -11,22 +11,20 @@
 namespace Lunr\Vortex\FCM;
 
 /**
- * Firebase Cloud Messaging Notification Priority Types.
+ * Firebase Cloud Messaging Notification Priority Types for Android.
  */
-class FCMPriority
+enum FCMAndroidPriority: string
 {
 
     /**
      * Deliver notification immediately.
-     * @var string
      */
-    public const HIGH = 'high';
+    case High = 'HIGH';
 
     /**
      * Deliver notification with normal priority.
-     * @var string
      */
-    public const NORMAL = 'normal';
+    case Normal = 'NORMAL';
 
 }
 

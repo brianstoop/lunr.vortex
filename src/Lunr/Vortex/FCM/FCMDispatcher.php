@@ -129,14 +129,18 @@ class FCMDispatcher implements PushNotificationDispatcherInterface
         {
             $this->logger->warning('Tried to push FCM notification to {endpoint} but wasn\'t authenticated.', [ 'endpoint' => $endpoints[0] ]);
 
-            return $this->get_response($this->get_new_response_object_for_failed_request(401), $this->logger, $endpoints[0], $payload->get_payload());
+            $response = $this->get_new_response_object_for_failed_request(401);
+
+            return $this->get_response($response, $this->logger, $endpoints[0], $payload->get_json_payload());
         }
 
         if ($this->project_id === NULL)
         {
             $this->logger->warning('Tried to push FCM notification to {endpoint} but project id is not provided.', [ 'endpoint' => $endpoints[0] ]);
 
-            return $this->get_response($this->get_new_response_object_for_failed_request(400), $this->logger, $endpoints[0], $payload->get_payload());
+            $response = $this->get_new_response_object_for_failed_request(400);
+
+            return $this->get_response($response, $this->logger, $endpoints[0], $payload->get_json_payload());
         }
 
         $headers = [
@@ -144,11 +148,8 @@ class FCMDispatcher implements PushNotificationDispatcherInterface
             'Authorization' => 'Bearer ' . $this->oauth_token,
         ];
 
-        $tmp_payload = json_decode($payload->get_payload(), TRUE);
-
-        $tmp_payload['to'] = $endpoints[0];
-
-        $json_payload = json_encode($tmp_payload, JSON_UNESCAPED_UNICODE);
+        $json_payload = $payload->set_token($endpoints[0])
+                                ->get_json_payload(JSON_UNESCAPED_UNICODE);
 
         try
         {
@@ -157,7 +158,9 @@ class FCMDispatcher implements PushNotificationDispatcherInterface
                 'connect_timeout' => 15 // timeout in seconds
             ];
 
-            $http_response = $this->http->post(self::GOOGLE_SEND_URL . $this->project_id . '/messages:send', $headers, $json_payload, $options);
+            $url = self::GOOGLE_SEND_URL . $this->project_id . '/messages:send';
+
+            $http_response = $this->http->post($url, $headers, $json_payload, $options);
         }
         catch (RequestsException $e)
         {

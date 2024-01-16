@@ -1,1 +1,1 @@
-{"registration_ids":["one","two","three"],"collapse_key":"test","data":{"key1":"value1","key2":"value2"},"time_to_live":10}
+{"message":{"token":"one","collapse_key":"test","data":{"key1":"value1","key2":"value2"},"time_to_live":10}}

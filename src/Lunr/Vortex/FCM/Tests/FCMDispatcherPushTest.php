@@ -84,7 +84,7 @@ class FCMDispatcherPushTest extends FCMDispatcherTest
         $endpoints = [ 'endpoint' ];
 
         $this->payload->expects($this->once())
-                      ->method('get_payload')
+                      ->method('get_json_payload')
                       ->willReturn('{"collapse_key":"abcde-12345"}');
 
         $this->set_reflection_property_value('oauth_token', NULL);
@@ -117,7 +117,7 @@ class FCMDispatcherPushTest extends FCMDispatcherTest
         $endpoints = [ 'endpoint' ];
 
         $this->payload->expects($this->once())
-                      ->method('get_payload')
+                      ->method('get_json_payload')
                       ->willReturn('{"collapse_key":"abcde-12345"}');
 
         $this->set_reflection_property_value('oauth_token', 'test');
@@ -151,7 +151,12 @@ class FCMDispatcherPushTest extends FCMDispatcherTest
         $endpoints = [ 'endpoint' ];
 
         $this->payload->expects($this->once())
-                      ->method('get_payload')
+                      ->method('set_token')
+                      ->with('endpoint')
+                      ->willReturnSelf();
+
+        $this->payload->expects($this->once())
+                      ->method('get_json_payload')
                       ->willReturn('{"collapse_key":"abcde-12345"}');
 
         $this->set_reflection_property_value('oauth_token', 'oauth_token');
@@ -188,17 +193,25 @@ class FCMDispatcherPushTest extends FCMDispatcherTest
             'Authorization' => 'Bearer oauth_token',
         ];
 
-        $url  = 'https://fcm.googleapis.com/v1/projects/fcm-project/messages:send';
-        $post = '{"to":"endpoint"}';
+        $url = 'https://fcm.googleapis.com/v1/projects/fcm-project/messages:send';
 
         $options = [
             'timeout'         => 15,
             'connect_timeout' => 15
         ];
 
+        $this->payload->expects($this->once())
+                      ->method('set_token')
+                      ->with('endpoint')
+                      ->willReturnSelf();
+
+        $this->payload->expects($this->once())
+                      ->method('get_json_payload')
+                      ->willReturn('{"token":"endpoint"}');
+
         $this->http->expects($this->once())
                    ->method('post')
-                   ->with($this->equalTo($url), $this->equalTo($headers), $this->equalTo($post), $this->equalTo($options))
+                   ->with($this->equalTo($url), $this->equalTo($headers), $this->equalTo('{"token":"endpoint"}'), $this->equalTo($options))
                    ->will($this->throwException(new RequestsException('cURL error 10: Request error', 'curlerror', NULL)));
 
         $message = 'Dispatching FCM notification(s) failed: {message}';
@@ -234,17 +247,25 @@ class FCMDispatcherPushTest extends FCMDispatcherTest
             'Authorization' => 'Bearer oauth_token',
         ];
 
-        $url  = 'https://fcm.googleapis.com/v1/projects/fcm-project/messages:send';
-        $post = '{"to":"endpoint"}';
+        $url = 'https://fcm.googleapis.com/v1/projects/fcm-project/messages:send';
 
         $options = [
             'timeout'         => 15,
             'connect_timeout' => 15
         ];
 
+        $this->payload->expects($this->once())
+                      ->method('set_token')
+                      ->with('endpoint')
+                      ->willReturnSelf();
+
+        $this->payload->expects($this->once())
+                      ->method('get_json_payload')
+                      ->willReturn('{"token":"endpoint"}');
+
         $this->http->expects($this->once())
                    ->method('post')
-                   ->with($this->equalTo($url), $this->equalTo($headers), $this->equalTo($post), $this->equalTo($options))
+                   ->with($this->equalTo($url), $this->equalTo($headers), $this->equalTo('{"token":"endpoint"}'), $this->equalTo($options))
                    ->will($this->throwException(new RequestsException('cURL error 28: Request timed out', 'curlerror', NULL)));
 
         $message = 'Dispatching FCM notification(s) failed: {message}';
@@ -283,12 +304,21 @@ class FCMDispatcherPushTest extends FCMDispatcherTest
         ];
 
         $url  = 'https://fcm.googleapis.com/v1/projects/fcm-project/messages:send';
-        $post = '{"to":"endpoint"}';
+        $post = '{"token":"endpoint"}';
 
         $options = [
             'timeout'         => 15,
             'connect_timeout' => 15
         ];
+
+        $this->payload->expects($this->once())
+                      ->method('set_token')
+                      ->with('endpoint')
+                      ->willReturnSelf();
+
+        $this->payload->expects($this->once())
+                      ->method('get_json_payload')
+                      ->willReturn($post);
 
         $this->http->expects($this->once())
                    ->method('post')
@@ -310,10 +340,6 @@ class FCMDispatcherPushTest extends FCMDispatcherTest
 
         $endpoints = [ 'endpoint' ];
 
-        $this->payload->expects($this->once())
-                      ->method('get_payload')
-                      ->willReturn('{"collapse_key":"abcde-12345"}');
-
         $response = $this->getMockBuilder('WpOrg\Requests\Response')->getMock();
 
         $headers = [
@@ -322,12 +348,21 @@ class FCMDispatcherPushTest extends FCMDispatcherTest
         ];
 
         $url  = 'https://fcm.googleapis.com/v1/projects/fcm-project/messages:send';
-        $post = '{"collapse_key":"abcde-12345","to":"endpoint"}';
+        $post = '{"collapse_key":"abcde-12345","token":"endpoint"}';
 
         $options = [
             'timeout'         => 15,
             'connect_timeout' => 15
         ];
+
+        $this->payload->expects($this->once())
+                      ->method('set_token')
+                      ->with('endpoint')
+                      ->willReturnSelf();
+
+        $this->payload->expects($this->once())
+                      ->method('get_json_payload')
+                      ->willReturn($post);
 
         $this->http->expects($this->once())
                    ->method('post')
@@ -349,10 +384,6 @@ class FCMDispatcherPushTest extends FCMDispatcherTest
 
         $endpoints = [ 'endpoint' ];
 
-        $this->payload->expects($this->once())
-                      ->method('get_payload')
-                      ->willReturn('{"collapse_key":"abcde-12345","data":{"message":"凄い"}}');
-
         $response = $this->getMockBuilder('WpOrg\Requests\Response')->getMock();
 
         $headers = [
@@ -361,12 +392,21 @@ class FCMDispatcherPushTest extends FCMDispatcherTest
         ];
 
         $url  = 'https://fcm.googleapis.com/v1/projects/fcm-project/messages:send';
-        $post = '{"collapse_key":"abcde-12345","data":{"message":"凄い"},"to":"endpoint"}';
+        $post = '{"collapse_key":"abcde-12345","data":{"message":"凄い"},"token":"endpoint"}';
 
         $options = [
             'timeout'         => 15,
             'connect_timeout' => 15
         ];
+
+        $this->payload->expects($this->once())
+                      ->method('set_token')
+                      ->with('endpoint')
+                      ->willReturnSelf();
+
+        $this->payload->expects($this->once())
+                      ->method('get_json_payload')
+                      ->willReturn($post);
 
         $this->http->expects($this->once())
                    ->method('post')
