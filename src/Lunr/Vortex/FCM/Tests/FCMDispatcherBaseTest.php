@@ -10,7 +10,6 @@
 
 namespace Lunr\Vortex\FCM\Tests;
 
-use Lunr\Vortex\FCM\FCMType;
 use Lunr\Halo\PropertyTraits\PsrLoggerTestTrait;
 
 /**
@@ -61,22 +60,9 @@ class FCMDispatcherBaseTest extends FCMDispatcherTest
      */
     public function testGetResponseReturnsFCMResponseObject(): void
     {
-        $result = $this->class->get_response();
+        $result = $this->class->get_response($this->response, $this->logger, 'endpoint', '{}');
 
         $this->assertInstanceOf('Lunr\Vortex\FCM\FCMResponse', $result);
-    }
-
-    /**
-     * Test that get_batch_response() returns FCMBatchResponse.
-     *
-     * @covers Lunr\Vortex\FCM\FCMDispatcher::get_batch_response
-     */
-    public function testGetBatchResponseReturnsFCMBatchResponseObject(): void
-    {
-        $method = $this->get_accessible_reflection_method('get_batch_response');
-        $result = $method->invokeArgs($this->class, [ $this->response, $this->logger, [ 'endpoint' ], '{}' ]);
-
-        $this->assertInstanceOf('Lunr\Vortex\FCM\FCMBatchResponse', $result);
     }
 
 }

@@ -43,11 +43,8 @@
             <file>../src/Lunr/Vortex/FCM/Tests/FCMPayloadHasTopicTest.php</file>
             <file>../src/Lunr/Vortex/FCM/Tests/FCMPayloadHasConditionTest.php</file>
             <file>../src/Lunr/Vortex/FCM/Tests/FCMPayloadSetTest.php</file>
-            <file>../src/Lunr/Vortex/FCM/Tests/FCMBatchResponseBasePushErrorTest.php</file>
-            <file>../src/Lunr/Vortex/FCM/Tests/FCMBatchResponseBasePushSuccessTest.php</file>
-            <file>../src/Lunr/Vortex/FCM/Tests/FCMBatchResponseGetStatusTest.php</file>
-            <file>../src/Lunr/Vortex/FCM/Tests/FCMResponseBaseTest.php</file>
-            <file>../src/Lunr/Vortex/FCM/Tests/FCMResponseAddBatchResponseTest.php</file>
+            <file>../src/Lunr/Vortex/FCM/Tests/FCMResponseBasePushErrorTest.php</file>
+            <file>../src/Lunr/Vortex/FCM/Tests/FCMResponseBasePushSuccessTest.php</file>
             <file>../src/Lunr/Vortex/FCM/Tests/FCMResponseGetStatusTest.php</file>
             <file>../src/Lunr/Vortex/FCM/Tests/FCMDispatcherBaseTest.php</file>
             <file>../src/Lunr/Vortex/FCM/Tests/FCMDispatcherSetTest.php</file>

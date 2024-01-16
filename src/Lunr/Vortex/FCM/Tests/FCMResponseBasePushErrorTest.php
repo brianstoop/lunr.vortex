@@ -1,7 +1,7 @@
 <?php
 
 /**
- * This file contains the FCMBatchResponseBasePushErrorTest class.
+ * This file contains the FCMResponseBasePushErrorTest class.
  *
  * SPDX-FileCopyrightText: Copyright 2016 M2mobi B.V., Amsterdam, The Netherlands
  * SPDX-FileCopyrightText: Copyright 2022 Move Agency Group B.V., Zwolle, The Netherlands
@@ -10,28 +10,29 @@
 
 namespace Lunr\Vortex\FCM\Tests;
 
-use Lunr\Vortex\FCM\FCMBatchResponse;
+use Lunr\Vortex\FCM\FCMResponse;
 use Lunr\Vortex\PushNotificationStatus;
 use ReflectionClass;
 
 /**
- * This class contains tests for the constructor of the FCMBatchResponse class
+ * This class contains tests for the constructor of the FCMResponse class
  * in case of a push notification error.
  *
- * @covers Lunr\Vortex\FCM\FCMBatchResponse
+ * @covers Lunr\Vortex\FCM\FCMResponse
  */
-class FCMBatchResponseBasePushErrorTest extends FCMBatchResponseTest
+class FCMResponseBasePushErrorTest extends FCMResponseTest
 {
 
     /**
      * Test constructor behavior for error of push notification in case of invalid JSON.
      *
-     * @covers Lunr\Vortex\FCM\FCMBatchResponse::__construct
+     * @covers Lunr\Vortex\FCM\FCMResponse::__construct
      */
     public function testPushErrorInvalidJSON(): void
     {
         $http_code = 400;
         $content   = 'Field "collapse_key" must be a JSON string: 1463565451';
+        $endpoint  = 'endpoint1';
 
         $this->response->status_code = $http_code;
         $this->response->body        = $content;
@@ -39,16 +40,17 @@ class FCMBatchResponseBasePushErrorTest extends FCMBatchResponseTest
         $this->logger->expects($this->once())
                      ->method('warning')
                      ->with(
-                         'Dispatching FCM notification failed: {error}',
-                         [ 'error' => "Invalid JSON ({$content})" ]
+                         'Dispatching FCM notification failed for endpoint {endpoint}: {error}',
+                         [ 'endpoint' => $endpoint, 'error' => "Invalid JSON ({$content})" ]
                      );
 
-        $this->class = new FCMBatchResponse($this->response, $this->logger, [ 'endpoint1' ], '{}');
+        $this->class = new FCMResponse($this->response, $this->logger, $endpoint, '{}');
 
         parent::baseSetUp($this->class);
 
         $this->assertPropertySame('logger', $this->logger);
-        $this->assertPropertyEquals('statuses', [ 'endpoint1' => PushNotificationStatus::ERROR ]);
+        $this->assertPropertySame('endpoint', $endpoint);
+        $this->assertPropertyEquals('status', PushNotificationStatus::ERROR);
         $this->assertPropertyEquals('content', $content);
         $this->assertPropertyEquals('http_code', $http_code);
     }
@@ -56,12 +58,13 @@ class FCMBatchResponseBasePushErrorTest extends FCMBatchResponseTest
     /**
      * Test constructor behavior for error of push notification in case of authentication error.
      *
-     * @covers Lunr\Vortex\FCM\FCMBatchResponse::__construct
+     * @covers Lunr\Vortex\FCM\FCMResponse::__construct
      */
     public function testPushErrorAuthenticationError(): void
     {
         $http_code = 401;
         $content   = 'stuff';
+        $endpoint  = 'endpoint1';
 
         $this->response->status_code = $http_code;
         $this->response->body        = $content;
@@ -69,16 +72,17 @@ class FCMBatchResponseBasePushErrorTest extends FCMBatchResponseTest
         $this->logger->expects($this->once())
                      ->method('warning')
                      ->with(
-                         'Dispatching FCM notification failed: {error}',
-                         [ 'error' => 'Error with authentication' ]
+                         'Dispatching FCM notification failed for endpoint {endpoint}: {error}',
+                         [ 'endpoint' => $endpoint, 'error' => 'Error with authentication' ]
                      );
 
-        $this->class = new FCMBatchResponse($this->response, $this->logger, [ 'endpoint1' ], '{}');
+        $this->class = new FCMResponse($this->response, $this->logger, $endpoint, '{}');
 
         parent::baseSetUp($this->class);
 
         $this->assertPropertySame('logger', $this->logger);
-        $this->assertPropertyEquals('statuses', [ 'endpoint1' => PushNotificationStatus::ERROR ]);
+        $this->assertPropertySame('endpoint', $endpoint);
+        $this->assertPropertyEquals('status', PushNotificationStatus::ERROR);
         $this->assertPropertyEquals('content', $content);
         $this->assertPropertyEquals('http_code', $http_code);
     }
@@ -106,11 +110,12 @@ class FCMBatchResponseBasePushErrorTest extends FCMBatchResponseTest
      * @param int $http_code HTTP code received
      *
      * @dataProvider internalErrorHTTPCodeDataProvider
-     * @covers       Lunr\Vortex\FCM\FCMBatchResponse::__construct
+     * @covers       Lunr\Vortex\FCM\FCMResponse::__construct
      */
     public function testPushErrorInternalError($http_code): void
     {
-        $content = 'stuff';
+        $content  = 'stuff';
+        $endpoint = 'endpoint1';
 
         $this->response->status_code = $http_code;
         $this->response->body        = $content;
@@ -118,16 +123,17 @@ class FCMBatchResponseBasePushErrorTest extends FCMBatchResponseTest
         $this->logger->expects($this->once())
                      ->method('warning')
                      ->with(
-                         'Dispatching FCM notification failed: {error}',
-                         [ 'error' => 'Internal error' ]
+                         'Dispatching FCM notification failed for endpoint {endpoint}: {error}',
+                         [ 'endpoint' => $endpoint, 'error' => 'Internal error' ]
                      );
 
-        $this->class = new FCMBatchResponse($this->response, $this->logger, [ 'endpoint1' ], '{}');
+        $this->class = new FCMResponse($this->response, $this->logger, $endpoint, '{}');
 
         parent::baseSetUp($this->class);
 
         $this->assertPropertySame('logger', $this->logger);
-        $this->assertPropertyEquals('statuses', [ 'endpoint1' => PushNotificationStatus::TEMPORARY_ERROR ]);
+        $this->assertPropertySame('endpoint', $endpoint);
+        $this->assertPropertyEquals('status', PushNotificationStatus::TEMPORARY_ERROR);
         $this->assertPropertyEquals('content', $content);
         $this->assertPropertyEquals('http_code', $http_code);
     }
@@ -153,11 +159,12 @@ class FCMBatchResponseBasePushErrorTest extends FCMBatchResponseTest
      * @param int $http_code HTTP code received
      *
      * @dataProvider unknownErrorHTTPCodeDataProvider
-     * @covers       Lunr\Vortex\FCM\FCMBatchResponse::__construct
+     * @covers       Lunr\Vortex\FCM\FCMResponse::__construct
      */
     public function testPushErrorUnknownError($http_code): void
     {
-        $content = 'stuff';
+        $content  = 'stuff';
+        $endpoint = 'endpoint1';
 
         $this->response->status_code = $http_code;
         $this->response->body        = $content;
@@ -165,16 +172,17 @@ class FCMBatchResponseBasePushErrorTest extends FCMBatchResponseTest
         $this->logger->expects($this->once())
                      ->method('warning')
                      ->with(
-                         'Dispatching FCM notification failed: {error}',
-                         [ 'error' => 'Unknown error' ]
+                         'Dispatching FCM notification failed for endpoint {endpoint}: {error}',
+                         [ 'endpoint' => $endpoint, 'error' => 'Unknown error' ]
                      );
 
-        $this->class = new FCMBatchResponse($this->response, $this->logger, [ 'endpoint1' ], '{}');
+        $this->class = new FCMResponse($this->response, $this->logger, $endpoint, '{}');
 
         parent::baseSetUp($this->class);
 
         $this->assertPropertySame('logger', $this->logger);
-        $this->assertPropertyEquals('statuses', [ 'endpoint1' => PushNotificationStatus::UNKNOWN ]);
+        $this->assertPropertySame('endpoint', $endpoint);
+        $this->assertPropertyEquals('status', PushNotificationStatus::UNKNOWN);
         $this->assertPropertyEquals('content', $content);
         $this->assertPropertyEquals('http_code', $http_code);
     }

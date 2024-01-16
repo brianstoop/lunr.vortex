@@ -10,26 +10,18 @@
 
 namespace Lunr\Vortex\FCM;
 
-use Lunr\Vortex\PushNotificationMultiDispatcherInterface;
-use Lunr\Vortex\PushNotificationResponseInterface;
+use InvalidArgumentException;
+use Lunr\Vortex\PushNotificationDispatcherInterface;
 use Psr\Log\LoggerInterface;
 use WpOrg\Requests\Exception as RequestsException;
 use WpOrg\Requests\Response;
 use WpOrg\Requests\Session;
-use InvalidArgumentException;
 
 /**
  * Firebase Cloud Messaging Push Notification Dispatcher.
  */
-class FCMDispatcher implements PushNotificationMultiDispatcherInterface
+class FCMDispatcher implements PushNotificationDispatcherInterface
 {
-
-    /**
-     * Maximum number of endpoints allowed in one push.
-     * @var integer
-     */
-    private const BATCH_SIZE = 1000;
-
     /**
      * Push Notification authentication token.
      * @var string
@@ -81,33 +73,23 @@ class FCMDispatcher implements PushNotificationMultiDispatcherInterface
     /**
      * Getter for FCMResponse.
      *
-     * @return FCMResponse
-     */
-    public function get_response(): FCMResponse
-    {
-        return new FCMResponse();
-    }
-
-    /**
-     * Getter for FCMBatchResponse.
-     *
      * @param Response        $http_response Requests\Response object.
      * @param LoggerInterface $logger        Shared instance of a Logger.
-     * @param array           $endpoints     The endpoints the message was sent to (in the same order as sent).
+     * @param string          $endpoint      The endpoint the message was sent to.
      * @param string          $payload       Raw payload that was sent to FCM.
      *
-     * @return FCMBatchResponse
+     * @return FCMResponse
      */
-    public function get_batch_response(Response $http_response, LoggerInterface $logger, array $endpoints, string $payload): FCMBatchResponse
+    public function get_response(Response $http_response, LoggerInterface $logger, string $endpoint, string $payload): FCMResponse
     {
-        return new FCMBatchResponse($http_response, $logger, $endpoints, $payload);
+        return new FCMResponse($http_response, $logger, $endpoint, $payload);
     }
 
     /**
      * Push the notification.
      *
-     * @param object $payload   Payload object
-     * @param array  $endpoints Endpoints to send to in this batch
+     * @param object   $payload   Payload object
+     * @param string[] $endpoints Endpoints to send to in this batch
      *
      * @return FCMResponse Response object
      */
@@ -118,32 +100,11 @@ class FCMDispatcher implements PushNotificationMultiDispatcherInterface
             throw new InvalidArgumentException('Invalid payload object!');
         }
 
-        $fcm_response = $this->get_response();
-
-        foreach (array_chunk($endpoints, self::BATCH_SIZE) as &$batch)
+        if ($endpoints === [])
         {
-            $batch_response = $this->push_batch($payload, $batch);
-
-            $fcm_response->add_batch_response($batch_response, $batch);
-
-            unset($batch_response);
+            throw new InvalidArgumentException('No endpoints provided!');
         }
 
-        unset($batch);
-
-        return $fcm_response;
-    }
-
-    /**
-     * Push the notification to a batch of endpoints.
-     *
-     * @param FCMPayload $payload   Payload object
-     * @param array      $endpoints Endpoints to send to in this batch
-     *
-     * @return FCMBatchResponse Response object
-     */
-    protected function push_batch(FCMPayload $payload, array &$endpoints)
-    {
         $headers = [
             'Content-Type'  => 'application/json',
             'Authorization' => 'key=' . $this->auth_token,
@@ -151,14 +112,7 @@ class FCMDispatcher implements PushNotificationMultiDispatcherInterface
 
         $tmp_payload = json_decode($payload->get_payload(), TRUE);
 
-        if (count($endpoints) > 1)
-        {
-            $tmp_payload['registration_ids'] = $endpoints;
-        }
-        elseif (isset($endpoints[0]))
-        {
-            $tmp_payload['to'] = $endpoints[0];
-        }
+        $tmp_payload['to'] = $endpoints[0];
 
         $json_payload = json_encode($tmp_payload, JSON_UNESCAPED_UNICODE);
 
@@ -177,6 +131,7 @@ class FCMDispatcher implements PushNotificationMultiDispatcherInterface
                 'Dispatching FCM notification(s) failed: {message}',
                 [ 'message' => $e->getMessage() ]
             );
+
             $http_response = $this->get_new_response_object_for_failed_request();
 
             if ($e->getType() == 'curlerror' && curl_errno($e->getData()) == 28)
@@ -185,7 +140,7 @@ class FCMDispatcher implements PushNotificationMultiDispatcherInterface
             }
         }
 
-        return $this->get_batch_response($http_response, $this->logger, $endpoints, $json_payload);
+        return $this->get_response($http_response, $this->logger, $endpoints[0], $json_payload);
     }
 
     /**

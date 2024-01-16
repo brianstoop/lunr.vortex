@@ -10,7 +10,9 @@
 
 namespace Lunr\Vortex\FCM\Tests;
 
+use Lunr\Vortex\FCM\FCMResponse;
 use Lunr\Vortex\PushNotificationStatus;
+use ReflectionClass;
 
 /**
  * This class contains tests for the get_status function of the FCMResponse class.
@@ -21,68 +23,50 @@ class FCMResponseGetStatusTest extends FCMResponseTest
 {
 
     /**
-     * Unit test data provider.
+     * Testcase constructor.
      *
-     * @return array $data array of endpoints statuses / status result
+     * @return void
      */
-    public function endpointDataProvider(): array
+    public function setUp(): void
     {
-        $data = [];
+        parent::setUp();
 
-        // return unknown status if no status set
-        $data[] = [ [], PushNotificationStatus::UNKNOWN ];
+        $content = file_get_contents(TEST_STATICS . '/Vortex/fcm/response_single_success.json');
 
-        // return unknown status if endpoint absent
-        $data[] = [
-            [
-                'endpoint1' => PushNotificationStatus::INVALID_ENDPOINT,
-            ],
-            PushNotificationStatus::UNKNOWN,
-        ];
-        $data[] = [
-            [
-                'endpoint1' => PushNotificationStatus::ERROR,
-                'endpoint2' => PushNotificationStatus::INVALID_ENDPOINT,
-                'endpoint3' => PushNotificationStatus::SUCCESS,
-            ],
-            PushNotificationStatus::UNKNOWN,
-        ];
+        $this->response->status_code = 200;
+        $this->response->body        = $content;
 
-        // return endpoint own status if present
-        $data[] = [
-            [
-                'endpoint_param' => PushNotificationStatus::INVALID_ENDPOINT,
-            ],
-            PushNotificationStatus::INVALID_ENDPOINT,
-        ];
-        $data[] = [
-            [
-                'endpoint1'      => PushNotificationStatus::ERROR,
-                'endpoint_param' => PushNotificationStatus::SUCCESS,
-                'endpoint2'      => PushNotificationStatus::TEMPORARY_ERROR,
-            ],
-            PushNotificationStatus::SUCCESS,
-        ];
+        $this->class = new FCMResponse($this->response, $this->logger, 'endpoint1', '{}');
 
-        return $data;
+        parent::baseSetUp($this->class);
     }
 
     /**
-     * Test the get_status() behavior.
+     * Test the get_status() returns unknown status if wrong endpoint is provided.
      *
-     * @param array $statuses Endpoints statuses
-     * @param int   $status   Expected function result
-     *
-     * @dataProvider endpointDataProvider
-     * @covers       Lunr\Vortex\FCM\FCMResponse::get_status
+     * @covers Lunr\Vortex\FCM\FCMResponse::get_status
      */
-    public function testGetStatus($statuses, $status): void
+    public function testGetStatusReturnsUnknown(): void
     {
-        $this->set_reflection_property_value('statuses', $statuses);
+        $this->set_reflection_property_value('status', PushNotificationStatus::SUCCESS);
 
         $result = $this->class->get_status('endpoint_param');
 
-        $this->assertEquals($status, $result);
+        $this->assertSame(PushNotificationStatus::UNKNOWN, $result);
+    }
+
+    /**
+     * Test the get_status() succeeds.
+     *
+     * @covers Lunr\Vortex\FCM\FCMResponse::get_status
+     */
+    public function testGetStatusSucceeds(): void
+    {
+        $this->set_reflection_property_value('status', PushNotificationStatus::SUCCESS);
+
+        $result = $this->class->get_status('endpoint1');
+
+        $this->assertSame(PushNotificationStatus::SUCCESS, $result);
     }
 
 }
