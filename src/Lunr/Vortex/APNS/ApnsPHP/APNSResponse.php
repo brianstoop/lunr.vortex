@@ -10,8 +10,8 @@
 
 namespace Lunr\Vortex\APNS\ApnsPHP;
 
-use Lunr\Vortex\PushNotificationStatus;
 use Lunr\Vortex\PushNotificationResponseInterface;
+use Lunr\Vortex\PushNotificationStatus;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -19,6 +19,7 @@ use Psr\Log\LoggerInterface;
  */
 class APNSResponse implements PushNotificationResponseInterface
 {
+    use APNSPushNotificationStatusTrait;
 
     /**
      * Shared instance of a Logger class.
@@ -101,43 +102,7 @@ class APNSResponse implements PushNotificationResponseInterface
                     $reason = $message_data['reason'] ?? NULL;
                 }
 
-                switch ($status_code)
-                {
-                    case APNSHttpStatus::ERROR_BAD_REQUEST:
-                    case APNSHttpStatus::ERROR_UNREGISTERED:
-                    case APNSBinaryStatus::ERROR_INVALID_TOKEN_SIZE:
-                    case APNSBinaryStatus::ERROR_INVALID_TOKEN:
-                        $status = PushNotificationStatus::INVALID_ENDPOINT;
-                        break;
-                    case APNSHttpStatus::TOO_MANY_REQUESTS:
-                    case APNSBinaryStatus::ERROR_PROCESSING:
-                        $status = PushNotificationStatus::TEMPORARY_ERROR;
-                        break;
-                    default:
-                        $status = PushNotificationStatus::UNKNOWN;
-                        break;
-                }
-
-                //Refine based on reasons in the HTTP status
-                switch ($reason)
-                {
-                    case APNSHttpStatusReason::ERROR_TOPIC_BLOCKED:
-                    case APNSHttpStatusReason::ERROR_CERTIFICATE_INVALID:
-                    case APNSHttpStatusReason::ERROR_CERTIFICATE_ENVIRONMENT:
-                    case APNSHttpStatusReason::ERROR_INVALID_AUTH_TOKEN:
-                        $status = PushNotificationStatus::ERROR;
-                        break;
-                    case APNSHttpStatusReason::ERROR_IDLE_TIMEOUT:
-                    case APNSHttpStatusReason::ERROR_EXPIRED_AUTH_TOKEN:
-                        $status = PushNotificationStatus::TEMPORARY_ERROR;
-                        break;
-                    case APNSHttpStatusReason::ERROR_BAD_TOKEN:
-                    case APNSHttpStatusReason::ERROR_NON_MATCHING_TOKEN:
-                        $status = PushNotificationStatus::INVALID_ENDPOINT;
-                        break;
-                    default:
-                    break;
-                }
+                $status = $this->get_apns_error_status($status_code, $reason);
 
                 $endpoint = $message->getRecipient();
 
