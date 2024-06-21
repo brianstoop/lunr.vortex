@@ -165,6 +165,27 @@ class FCMDispatcher implements PushNotificationMultiDispatcherInterface
     }
 
     /**
+     * Set the FCM private key for sending notifications by file.
+     *
+     * @param string $private_key_file The file with the private key of the FCM project
+     *
+     * @return $this
+     */
+    public function set_private_key_by_file(string $private_key_file): static
+    {
+        $private_key = file_get_contents($private_key_file);
+
+        if ($private_key === FALSE)
+        {
+            throw new RuntimeException('File does not exists or is not readable!');
+        }
+
+        $this->private_key = $private_key;
+
+        return $this;
+    }
+
+    /**
      * Set a token to authenticate with.
      *
      * @param string $token The OAuth token to use
